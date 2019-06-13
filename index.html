@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Track like word demo</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="vue.js"></script>
+</head>
+<body>
+    <div id="app">
+        <p>cursor: {{caret.start}} - {{caret.end}}</p>
+        <div id="tracker" contenteditable="true"
+            v-on:click="updateCaret"
+            v-on:keydown="input($event)">
+            <template v-for="(char, index) in decomposed">
+                <br v-if="char[1]==='\n'"/>
+                <span v-else :class="char[0]" :data-index="index">{{char[1]}}</span>
+            </template>
+        </div>
+    </div>
+    <script src="tracker.js"></script>
+</body>
+</html>
