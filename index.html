@@ -13,7 +13,8 @@
         <p>cursor: {{caret.start}} - {{caret.end}}</p>
         <div id="tracker" contenteditable="true"
             v-on:click="updateCaret"
-            v-on:keydown="input($event)">
+            v-on:keydown="input($event)"
+            v-on:paste="paste($event)">
             <template v-for="(char, index) in decomposed">
                 <br v-if="char[1]==='\n'"/>
                 <span v-else :class="char[0]" :data-index="index">{{char[1]}}</span>

@@ -99,17 +99,20 @@ const app = new Vue({
                     addChar(this.decomposed, '\n', this.caret);
                     break;
                 case 'Backspace':
-                    
-                    deleteChar(this.decomposed, getCaret().end);
+                    deleteChar(this.decomposed, getCaret().end - 1);
                     break;
                 default:
                     if (event.key.length === 1) {
-                        this.decomposed = processChar(event.key, this.decomposed, this.caret);
+                        deleteInterval(this.decomposed, this.caret.start, this.caret.end);
+                        addChar(this.decomposed, event.key, this.caret.end);
                         this.caret.start = setCaret(this.caret.end);
                         this.caret.end = this.caret.start;
                     }
                 break;
             }
+        },
+        paste: function(event) {
+            console.log(event);
         }
     },
     created() {
