@@ -58,8 +58,7 @@ const setCaret = (position) => {
     sel.removeAllRanges();
     sel.addRange(range);
     el.focus();
-    return position + 1;
-}
+};
 const getCaret = () => {
     const selection = window.getSelection();
     const range = selection.getRangeAt(0);
@@ -67,7 +66,13 @@ const getCaret = () => {
         start: +range.startContainer.parentElement.dataset['index'] + range.startOffset,
         end: +range.endContainer.parentElement.dataset['index'] + range.endOffset
     };
-}
+};
+const shiftCaret = (text, shift) => {
+    const position = getCaret().end;
+    if (position + shift >= 0 && position + shift <= text.length) {
+        setCaret(position + shift);
+    }
+};
 
 const app = new Vue({
     el: '#app',
@@ -90,23 +95,24 @@ const app = new Vue({
 
             switch (event.key) {
                 case 'ArrowLeft':
-                    setCaret(getCaret().start - 1);
+                    shiftCaret(this.decomposed, -1);
                     break;
                 case 'ArrowRight':
-                    setCaret(getCaret().end + 1);
+                    shiftCaret(this.decomposed, 1);
                     break;
                 case 'Enter':
                     addChar(this.decomposed, '\n', this.caret);
+                    shiftCaret(this.decomposed, 1);
                     break;
                 case 'Backspace':
                     deleteChar(this.decomposed, getCaret().end - 1);
+                    shiftCaret(this.decomposed, -1);
                     break;
                 default:
                     if (event.key.length === 1) {
                         deleteInterval(this.decomposed, this.caret.start, this.caret.end);
                         addChar(this.decomposed, event.key, this.caret.end);
-                        this.caret.start = setCaret(this.caret.end);
-                        this.caret.end = this.caret.start;
+                        shiftCaret(this.decomposed, 1);
                     }
                 break;
             }
