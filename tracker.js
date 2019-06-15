@@ -6,25 +6,6 @@ const codeName = {
 const decompose = (formatted) => formatted.reduce((chars, chunk) => {
     return chars.concat(chunk[1].split('').map((char) => [codeName[chunk[0]], char]));
 }, []);
-const processChar = (char, prev, caret) => {
-    var next = [];
-    for (var i = 0; i < caret.start; i++) {
-        next.push(prev[i]);
-    }
-    for (var i = caret.start; i < caret.end; i++) {
-        if (prev[i][0] == codeName.deleted) {
-            next.push(prev[i]);
-        } else if (prev[i][0] == codeName.normal) {
-            const deleted = [codeName.deleted, prev[i][1]];
-            next.push(deleted);
-        }
-    }
-    next.push([codeName.added, char]);
-    for (var i = caret.end; i < prev.length; i++) {
-        next.push(prev[i]);
-    }
-    return next;
-};
 const addChar = (text, char, position) => {
     text.splice(position, 0, [codeName.added, char]);
 };
@@ -51,9 +32,17 @@ const deleteInterval = (text, positionStart, positionEnd) => {
 };
 const setCaret = (position) => {
     const el = document.getElementById('tracker');
-    var range = document.createRange();
-    var sel = window.getSelection();
-    range.setStart(el.childNodes[position], 1);
+    const range = document.createRange();
+    const sel = window.getSelection();
+    let offset = 0;
+    const containerCount = el.childNodes.length;
+    if (position >= containerCount) {
+        position = containerCount - 1;
+        offset = 1;
+    }
+    const container = el.childNodes[position];
+    const textNode = container.childNodes[0];
+    range.setStart(textNode, offset);
     range.collapse(true);
     sel.removeAllRanges();
     sel.addRange(range);
@@ -71,7 +60,9 @@ const shiftCaret = (text, shift) => {
     const position = getCaret().end;
     if (position + shift >= 0 && position + shift <= text.length) {
         setCaret(position + shift);
+        return shift;
     }
+    return 0;
 };
 
 const app = new Vue({
@@ -101,7 +92,7 @@ const app = new Vue({
                     shiftCaret(this.decomposed, 1);
                     break;
                 case 'Enter':
-                    addChar(this.decomposed, '\n', this.caret);
+                    addChar(this.decomposed, '\n', this.caret.end);
                     shiftCaret(this.decomposed, 1);
                     break;
                 case 'Backspace':
@@ -110,7 +101,7 @@ const app = new Vue({
                     break;
                 default:
                     if (event.key.length === 1) {
-                        deleteInterval(this.decomposed, this.caret.start, this.caret.end);
+                        deleteInterval(this.decomposed, this.caret.start, this.caret.end - 1);
                         addChar(this.decomposed, event.key, this.caret.end);
                         shiftCaret(this.decomposed, 1);
                     }
