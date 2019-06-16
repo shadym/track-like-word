@@ -66,12 +66,13 @@ const clearSelection = (text, caret) => {
             for (let i = right; i >= left; i--) {
                 deleted = deleteChar(text, i);
             }
-            setCaret(caret.end - 1);
+            displayCaret(caret.end - 1);
             break;
     }
     return deleted;
 };
-const setCaret = (position) => {
+const displayCaret = (position) => {
+    console.log('setting caret to', position);
     const el = document.getElementById('tracker');
     const range = document.createRange();
     const sel = window.getSelection();
@@ -93,8 +94,10 @@ const setCaret = (position) => {
 const getCaret = () => {
     const selection = window.getSelection();
     const range = selection.getRangeAt(0);
-    const startNode = range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer;
-    const endNode = range.endContainer.nodeType === Node.TEXT_NODE ? range.endContainer.parentElement : range.endContainer;
+    const startNode = ["br", "#text"].indexOf(range.startContainer.nodeName.toLowerCase()) > -1
+        ? range.startContainer.parentElement : range.startContainer;
+    const endNode = ["br", "#text"].indexOf(range.endContainer.nodeName.toLowerCase()) > -1
+        ? range.endContainer.parentElement : range.endContainer;
     const caret = {
         type: selection.type,
         rangeCount: selection.rangeCount,
@@ -108,12 +111,19 @@ const shiftCaret = (text, caret, shift) => {
     if (shift) {
         const position = caret.end;
         if (position + shift >= 0 && position + shift <= text.length) {
-            setCaret(position + shift);
+            displayCaret(position + shift);
             shifted = shift;
         }
     }
     console.log("shifted", shifted);
+    caret.end += shifted;
+    caret.start = caret.end;
     return shifted;
+};
+const processKey = (text, key, caret) => {
+    clearSelection(text, caret);
+    addChar(text, key, caret.end);
+    shiftCaret(text, caret, 1);
 };
 
 const app = new Vue({
@@ -154,9 +164,7 @@ const app = new Vue({
                 default:
                     const key = event.key === 'Enter' ? '\n' : event.key;
                     if (key.length === 1) {
-                        clearSelection(this.decomposed, this.caret);
-                        addChar(this.decomposed, key, this.caret.end);
-                        shiftCaret(this.decomposed, this.caret, 1);
+                        processKey(this.decomposed, key, this.caret);
                     } else {
                         console.log('non printable', key);
                     }
@@ -169,6 +177,9 @@ const app = new Vue({
             event.preventDefault();
             const paste = (event.clipboardData || window.clipboardData).getData('text');
             console.log("paste:", paste);
+            for (var i = 0; i < paste.length; i++) {
+              processKey(this.decomposed, paste.charAt(i), this.caret);
+            }
         },
         focusTracker: function() {
             document.getElementById('tracker').focus();
