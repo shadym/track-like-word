@@ -28,17 +28,28 @@ const deleteChar = (text, position) => {
     return caretShift;
 };
 const deleteSelection = (text, caret) => {
-    if (caret.type === "None") {
-        console.error("No range to delete");
-        return;
-    }
-    const left = caret.type === "Caret" ? caret.end - 1 : caret.start;
-    const right = caret.end - 1;
+    let deleted = 0;
 
-    for (let i = right; i >= left; i--) {
-        shiftCaret(deleteChar(text, i));
+    switch (caret.type) {
+        case "None":
+            console.error("No range to delete");
+            break;
+        case "Caret":
+            deleted = deleteChar(text, caret.end - 1);
+            break;
+        case "Range":
+            const left = caret.start;
+            const right = caret.end - 1;
+            for (let i = right; i >= left; i--) {
+                deleteChar(text, i);
+            }
+            deleted = left - right - 1;
+            break;
+
     }
-    return right - left - 1;
+    deleted && shiftCaret(text, caret, deleted);
+    console.log("deleted", deleted);
+    return deleted;
 };
 const clearSelection = (text, caret) => {
     let deleted = 0;
@@ -55,9 +66,9 @@ const clearSelection = (text, caret) => {
             for (let i = right; i >= left; i--) {
                 deleted = deleteChar(text, i);
             }
+            setCaret(caret.end - 1);
             break;
     }
-    deleted && shiftCaret(text, deleted);
     return deleted;
 };
 const setCaret = (position) => {
@@ -89,15 +100,17 @@ const getCaret = () => {
     };
     return caret;
 };
-const shiftCaret = (text, shift) => {
+const shiftCaret = (text, caret, shift) => {
+    let shifted = 0;
     if (shift) {
-        const position = getCaret().end;
+        const position = caret.end;
         if (position + shift >= 0 && position + shift <= text.length) {
             setCaret(position + shift);
-            return shift;
+            shifted = shift;
         }
     }
-    return 0;
+    console.log("shifted", shifted);
+    return shifted;
 };
 
 const app = new Vue({
@@ -126,30 +139,31 @@ const app = new Vue({
 
             switch (event.key) {
                 case 'ArrowLeft':
-                    shiftCaret(this.decomposed, -1) && this.updateCaret();
+                    shiftCaret(this.decomposed, this.caret, -1);
                     break;
                 case 'ArrowRight':
-                    shiftCaret(this.decomposed, 1) && this.updateCaret();
+                    shiftCaret(this.decomposed, this.caret, 1);
                     break;
                 case 'Enter':
                     clearSelection(this.decomposed, this.caret);
                     addChar(this.decomposed, '\n', this.caret.end);
-                    shiftCaret(this.decomposed, 1) && this.updateCaret();
+                    shiftCaret(this.decomposed, this.caret, 1);
                     break;
                 case 'Backspace':
-                    const deleted = deleteSelection(this.decomposed, this.caret);
-                    shiftCaret(this.decomposed, deleted) && this.updateCaret();
+                    deleteSelection(this.decomposed, this.caret);
                     break;
                 default:
                     if (event.key.length === 1) {
                         clearSelection(this.decomposed, this.caret);
                         addChar(this.decomposed, event.key, this.caret.end);
-                        shiftCaret(this.decomposed, 1) && this.updateCaret();
+                        shiftCaret(this.decomposed, this.caret, 1);
                     } else {
                         console.log('non printable', event.key);
                     }
                 break;
             }
+
+            this.updateCaret();
         },
         paste: function(event) {
             event.preventDefault();
