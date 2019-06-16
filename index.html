@@ -16,10 +16,12 @@
             v-on:keydown="input($event)"
             v-on:paste="paste($event)">
             <template v-for="(char, index) in decomposed">
-                <br v-if="char[1]==='\n'"/>
+                <span :class="char[0]+' new-line'" v-if="char[1]==='\n'" :data-index="index"><br/></span>
                 <span v-else :class="char[0]" :data-index="index">{{char[1]}}</span>
             </template>
         </div>
+
+        <button v-on:click="focusTracker">Focus</button>
     </div>
     <script src="tracker.js"></script>
 </body>

@@ -76,12 +76,13 @@ const setCaret = (position) => {
     const range = document.createRange();
     const sel = window.getSelection();
     let offset = 0;
-    const containerCount = el.childNodes.length;
+    const containerCount = el.childNodes.length; // todo filter olny chars
     if (position >= containerCount) {
         position = containerCount - 1;
         offset = 1;
     }
-    const container = el.childNodes[position];
+    const charNodes = Array.prototype.slice.call(el.childNodes).filter((n) => n.tagName === "SPAN");
+    const container = charNodes[position];
     const textNode = container.childNodes[0];
     range.setStart(textNode, offset);
     range.collapse(true);
@@ -92,11 +93,13 @@ const setCaret = (position) => {
 const getCaret = () => {
     const selection = window.getSelection();
     const range = selection.getRangeAt(0);
+    const startNode = range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer;
+    const endNode = range.endContainer.nodeType === Node.TEXT_NODE ? range.endContainer.parentElement : range.endContainer;
     const caret = {
         type: selection.type,
         rangeCount: selection.rangeCount,
-        start: +range.startContainer.parentElement.dataset['index'] + range.startOffset,
-        end: +range.endContainer.parentElement.dataset['index'] + range.endOffset
+        start: +startNode.dataset['index'] + range.startOffset,
+        end: +endNode.dataset['index'] + range.endOffset
     };
     return caret;
 };
@@ -144,21 +147,18 @@ const app = new Vue({
                 case 'ArrowRight':
                     shiftCaret(this.decomposed, this.caret, 1);
                     break;
-                case 'Enter':
-                    clearSelection(this.decomposed, this.caret);
-                    addChar(this.decomposed, '\n', this.caret.end);
-                    shiftCaret(this.decomposed, this.caret, 1);
-                    break;
                 case 'Backspace':
                     deleteSelection(this.decomposed, this.caret);
                     break;
+                case 'Enter':
                 default:
-                    if (event.key.length === 1) {
+                    const key = event.key === 'Enter' ? '\n' : event.key;
+                    if (key.length === 1) {
                         clearSelection(this.decomposed, this.caret);
-                        addChar(this.decomposed, event.key, this.caret.end);
+                        addChar(this.decomposed, key, this.caret.end);
                         shiftCaret(this.decomposed, this.caret, 1);
                     } else {
-                        console.log('non printable', event.key);
+                        console.log('non printable', key);
                     }
                 break;
             }
@@ -169,6 +169,9 @@ const app = new Vue({
             event.preventDefault();
             const paste = (event.clipboardData || window.clipboardData).getData('text');
             console.log("paste:", paste);
+        },
+        focusTracker: function() {
+            document.getElementById('tracker').focus();
         }
     },
     created() {

@@ -22,3 +22,7 @@
     color: blue;
     text-decoration: underline;
 }
+.new-line::before {
+    content: "↩";
+    font-size: 12pt;
+}
