@@ -9,7 +9,7 @@ const decompose = (formatted) => formatted.reduce((chars, chunk) => {
 const addChar = (text, char, position) => {
     text.splice(position, 0, [codeName.added, char]);
 };
-const deleteChar = (text, position) => {
+const deleteChar = (text, position, isClearing) => {
     let caretShift = 0;
     if (position >= 0 && position < text.length)
     {
@@ -18,12 +18,16 @@ const deleteChar = (text, position) => {
         switch (status) {
             case codeName.added:
                 text.splice(position, 1);
+                caretShift = -1;
                 break;
             case codeName.normal:
                 text.splice(position, 1, [codeName.deleted, char[1]]);
+                caretShift = isClearing ? 0 : -1;
+                break;
+            case codeName.deleted:
+                caretShift = isClearing ? 0 : -1;
                 break;
         }
-        caretShift = -1;
     }
     return caretShift;
 };
@@ -65,9 +69,10 @@ const clearSelection = (text, caret) => {
             const left = caret.start;
             const right = caret.end - 1;    
             for (let i = right; i >= left; i--) {
-                deleted = deleteChar(text, i);
+                let d = deleteChar(text, i, true);
+                deleted += d;
             }
-            displayCaret(text, caret.end - 1);
+            shiftCaret(text, caret, deleted);
             break;
     }
     return deleted;
@@ -94,25 +99,41 @@ const getCaretCoordinates = (caret, spans) => {
 };
 const getCaretFromClick = (mouseEvent, caret, charCount) => {
     const target = mouseEvent.target;
-    if (!target.classList.contains("letter"))
-    {
-        return {
-            start: charCount,
-            end: charCount,
-            type: "Caret",
-        };
+    var selection = document.getSelection();
+    let start = caret.start;
+    let end = caret.end;
+    switch (selection.type) {
+        case "Range":
+            var range = selection.rangeCount && selection.getRangeAt(0);
+            start = +range.startContainer.parentNode.dataset["index"] + range.startOffset;
+            end = +range.endContainer.parentNode.dataset["index"] + range.endOffset;
+            break;
+        case "Caret":
+        case "None":
+            if (!target.classList.contains("letter"))
+            {
+                start = charCount;
+                end = charCount;
+            } else {
+                const rect = mouseEvent.target.getBoundingClientRect();
+                const letterX = mouseEvent.x - target.offsetLeft;
+                const closerToRight = Math.round(letterX / rect.width);
+                const targetIndex = Number(target.dataset["index"]);
+                const position = targetIndex + closerToRight;
+                start = position;
+                end = position;
+            }
+
+            break;
+        default:
+            console.log("No caret",selection, mouseEvent);
+            break;
     }
-
-    const rect = mouseEvent.target.getBoundingClientRect();
-    const letterX = mouseEvent.x - target.offsetLeft;
-    const closerToRight = Math.round(letterX / rect.width);
-    const targetIndex = Number(target.dataset["index"]);
-    const position = targetIndex + closerToRight;
-
+    
     return {
-        start: position,
-        end: position,
-        type: "Caret",
+        start,
+        end,
+        type: selection.type,
     };
 };
 const shiftCaret = (text, caret, shift) => {
@@ -126,7 +147,18 @@ const shiftCaret = (text, caret, shift) => {
     }
     caret.end += shifted;
     caret.start = caret.end;
+    caret.type = "Caret";
     return shifted;
+};
+const emptySelection = () => {
+    var sel = window.getSelection ? window.getSelection() : document.selection;
+    if (sel) {
+        if (sel.removeAllRanges) {
+            sel.removeAllRanges();
+        } else if (sel.empty) {
+            sel.empty();
+        }
+    }
 };
 const processKey = (text, key, caret) => {
     clearSelection(text, caret);
@@ -146,12 +178,13 @@ const app = new Vue({
             end: null,
         },
         caretUpdateRequired: false,
+        caretVisible: true,
         caretPosition: {
             x: 0,
             y: 0,
         },
         //formatted: [[codeName.normal, 'Hello, Vue.js '], [codeName.deleted, 'World'], [codeName.added, 'JS']],
-        formatted: [[codeName.normal, 'Hi']],
+        formatted: [[codeName.normal, '0123456789']],
         decomposed: null
     },
     updated: function () {
@@ -161,6 +194,9 @@ const app = new Vue({
                 if (this.caret.end <= spans.length) {
                     this.caretPosition = getCaretCoordinates(this.caret, spans);
                     this.caretUpdateRequired = false;
+                    if (this.caret.type == "Caret") {
+                        emptySelection();
+                    }
                 } else {
                     debugger;
                 }
@@ -175,6 +211,12 @@ const app = new Vue({
         },
         doubleClick: function(event) {
             console.log('double click', event);
+        },
+        hideCaret: function() {
+            this.caretVisible = false;
+        },
+        showCaret: function() {
+            this.caretVisible = true;
         },
         input: function(event) {
             if (event && !event.metaKey) {
@@ -191,8 +233,8 @@ const app = new Vue({
                     shiftCaret(this.decomposed, this.caret, 1);
                     break;
                 case 'Backspace':
-                    deleteSelection(this.decomposed, this.caret);
-                    this.caretUpdateRequired = true;
+                    const deleted = deleteSelection(this.decomposed, this.caret);
+                    this.caretUpdateRequired = !!deleted;
                     break;
                 case 'Tab':
                 case 'Enter':
@@ -210,6 +252,9 @@ const app = new Vue({
             if (!this.caretUpdateRequired) {
                 const spans = document.getElementsByClassName('letter');
                 this.caretPosition = getCaretCoordinates(this.caret, spans);
+                if (this.caret.type == "Caret") {
+                    emptySelection();
+                }
             }
         },
         paste: function(event) {
