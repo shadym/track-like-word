@@ -4,31 +4,27 @@
     border: 1px solid black;
     white-space: pre;
     display: inline-block;
+    font-size: 25pt;
 }
 .normal {
     display: inline;
-    font-size: 15pt;
     box-sizing: border-box;
     color: black;
 }
 .deleted {
     display: inline;
-    font-size: 15pt;
     color: red;
     text-decoration: line-through;
 }
 .added {
     display: inline;
-    font-size: 15pt;
-    color: blue;
+    color: #3F51B5;
     text-decoration: underline;
+    /* border-bottom: 1px solid #3F51B5; */
 }
 .new-line::before {
     content: "↩";
     font-size: 12pt;
-}
-.eot {
-    color: #eee;
 }
 @keyframes blinkCursor {
     from {
@@ -42,13 +38,13 @@
 #caret {
     width: 1px;
     height: 1em;
-    background: red;
+    background: #000000d4;
     margin: 0;
     padding: 0;
     line-height: 28px;
-    font-size: 15pt;
     display: block;
     position: absolute;
     pointer-events: none;
+    animation: blinkCursor 500ms ease infinite alternate;
+    transition: left 0.1s;
 }
-.letter {outline: 1px solid rgba(200, 140, 140, 0.3);}
