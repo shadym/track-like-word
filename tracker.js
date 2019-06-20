@@ -125,6 +125,10 @@ const processKey = (text, key, caret) => {
     addChar(text, key, caret.end);
     shiftCaret(text, caret, 1);
 };
+const codeFor = {
+    'Tab': '\t',
+    'Enter': '\n',
+};
 
 const app = new Vue({
     el: '#app',
@@ -160,9 +164,10 @@ const app = new Vue({
                 case 'Backspace':
                     deleteSelection(this.decomposed, this.caret);
                     break;
+                case 'Tab':
                 case 'Enter':
                 default:
-                    const key = event.key === 'Enter' ? '\n' : event.key;
+                    const key = event.key in codeFor ? codeFor[event.key] : event.key;
                     if (key.length === 1) {
                         processKey(this.decomposed, key, this.caret);
                     } else {
