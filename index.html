@@ -16,7 +16,7 @@
             v-on:dblclick="doubleClick($event)"
             v-on:keydown="input($event)"
             v-on:paste="paste($event)">
-            <div id="caret" v-bind:style="{left: caretPosition.x + 'px'}"></div><template v-for="(char, index) in decomposed">
+            <div id="caret" v-bind:style="{left: caretPosition.x + 'px', top: caretPosition.y + 'px'}"></div><template v-for="(char, index) in decomposed">
                 <span class="new-line letter" :class="char[0]" v-if="char[1]==='\n'" :data-index="index"><br/></span>
                 <span v-else :class="char[0]" :data-index="index" class="letter">{{char[1]}}</span>
             </template>

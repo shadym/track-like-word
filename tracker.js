@@ -83,9 +83,10 @@ const getCaretCoordinates = (caret, spans) => {
     const target = spans[caretPosition];
     const rect = target.getBoundingClientRect();
     const x = rect.left + useRightBound * rect.width;
+    const y = rect.top;
     return {
         x,
-        y: 0,
+        y,
     };
 };
 const getCaretFromClick = (mouseEvent, caret, charCount) => {
