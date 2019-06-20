@@ -8,6 +8,7 @@
 .normal {
     display: inline;
     font-size: 15pt;
+    box-sizing: border-box;
     color: black;
 }
 .deleted {
@@ -26,3 +27,28 @@
     content: "↩";
     font-size: 12pt;
 }
+.eot {
+    color: #eee;
+}
+@keyframes blinkCursor {
+    from {
+      opacity: 0;
+    }
+  
+    to {
+      opacity: 1;
+    }
+  }
+#caret {
+    width: 1px;
+    height: 1em;
+    background: red;
+    margin: 0;
+    padding: 0;
+    line-height: 28px;
+    font-size: 15pt;
+    display: block;
+    position: absolute;
+    pointer-events: none;
+}
+.letter {outline: 1px solid rgba(200, 140, 140, 0.3);}
