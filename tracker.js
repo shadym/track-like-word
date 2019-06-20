@@ -50,7 +50,6 @@ const deleteSelection = (text, caret) => {
 
     }
     deleted && shiftCaret(text, caret, deleted);
-    console.log("deleted", deleted);
     return deleted;
 };
 const clearSelection = (text, caret) => {
@@ -82,8 +81,12 @@ const getCaretCoordinates = (caret, spans) => {
     }
     const target = spans[caretPosition];
     const rect = target.getBoundingClientRect();
-    const x = rect.left + useRightBound * rect.width;
-    const y = rect.top;
+    let x = rect.x + useRightBound * rect.width;
+    let y = rect.top;
+    if (target.classList.contains("new-line")) {
+        x = spans[0].getBoundingClientRect().x;
+        y = rect.bottom;
+    }
     return {
         x,
         y,
@@ -125,7 +128,7 @@ const shiftCaret = (text, caret, shift) => {
     caret.start = caret.end;
     return shifted;
 };
-const processKey = (text, key, caret, shiftQueue) => {
+const processKey = (text, key, caret) => {
     clearSelection(text, caret);
     addChar(text, key, caret.end);
     shiftCaret(text, caret, 1);
@@ -155,7 +158,6 @@ const app = new Vue({
         this.$nextTick(function () {
             if (this.caretUpdateRequired) {
                 const spans = document.getElementsByClassName('letter');
-                console.log('caret should be shifted');
                 if (this.caret.end <= spans.length) {
                     this.caretPosition = getCaretCoordinates(this.caret, spans);
                     this.caretUpdateRequired = false;
@@ -181,8 +183,6 @@ const app = new Vue({
                 return;
             }
         
-            console.log("pressed", event.key, event);
-
             switch (event.key) {
                 case 'ArrowLeft':
                     shiftCaret(this.decomposed, this.caret, -1);
@@ -192,6 +192,7 @@ const app = new Vue({
                     break;
                 case 'Backspace':
                     deleteSelection(this.decomposed, this.caret);
+                    this.caretUpdateRequired = true;
                     break;
                 case 'Tab':
                 case 'Enter':
@@ -202,16 +203,13 @@ const app = new Vue({
                     } else {
                         console.log('non printable', key);
                     }
+                    this.caretUpdateRequired = true;
                 break;
             }
 
-            //update real caret position
-            const spans = document.getElementsByClassName('letter')
-            if (this.caret.end <= spans.length) {
+            if (!this.caretUpdateRequired) {
+                const spans = document.getElementsByClassName('letter');
                 this.caretPosition = getCaretCoordinates(this.caret, spans);
-            } else {
-                this.caretUpdateRequired = true; 
-                console.log('can not be set now, wait..')
             }
         },
         paste: function(event) {
@@ -219,8 +217,10 @@ const app = new Vue({
             const paste = (event.clipboardData || window.clipboardData).getData('text');
             console.log("paste:", paste);
             for (var i = 0; i < paste.length; i++) {
-              processKey(this.decomposed, paste.charAt(i), this.caret);
+                processKey(this.decomposed, paste.charAt(i), this.caret);
             }
+
+            this.caretUpdateRequired = true;
         },
         focusTracker: function() {
             document.getElementById('tracker').focus();
