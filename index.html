@@ -11,13 +11,14 @@
 <body>
     <div id="app">
         <p>cursor: {{caret.start}} - {{caret.end}}</p>
-        <div id="tracker" contenteditable="true"
+        <div id="tracker" tabindex="0"
             v-on:click="updateCaret"
+            v-on:dblclick="doubleClick($event)"
             v-on:keydown="input($event)"
             v-on:paste="paste($event)">
-            <template v-for="(char, index) in decomposed">
-                <span :class="char[0]+' new-line'" v-if="char[1]==='\n'" :data-index="index"><br/></span>
-                <span v-else :class="char[0]" :data-index="index">{{char[1]}}</span>
+            <div id="caret" v-bind:style="{left: caretPosition.x + 'px'}"></div><template v-for="(char, index) in decomposed">
+                <span class="new-line letter" :class="char[0]" v-if="char[1]==='\n'" :data-index="index"><br/></span>
+                <span v-else :class="char[0]" :data-index="index" class="letter">{{char[1]}}</span>
             </template>
         </div>
 
