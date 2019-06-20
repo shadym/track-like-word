@@ -209,9 +209,6 @@ const app = new Vue({
             const rendered = document.getElementsByClassName('letter');
             this.caretPosition = getCaretCoordinates(this.caret, rendered)
         },
-        doubleClick: function(event) {
-            console.log('double click', event);
-        },
         hideCaret: function() {
             this.caretVisible = false;
         },

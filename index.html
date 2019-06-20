@@ -16,7 +16,6 @@
             v-on:focus="showCaret"
             v-on:click="updateCaret"
             v-on:mouseup="updateCaret"
-            v-on:dblclick="doubleClick($event)"
             v-on:keydown="input($event)"
             v-on:paste="paste($event)">
             <div id="caret" v-bind:style="{left: caretPosition.x + 'px', top: caretPosition.y + 'px', display: caretVisible ? 'block' : 'none'}"></div><template v-for="(char, index) in decomposed">
