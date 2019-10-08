@@ -20,11 +20,13 @@
             v-on:paste="paste($event)">
             <div id="caret" v-bind:style="{left: caretPosition.x + 'px', top: caretPosition.y + 'px', display: caretVisible ? 'block' : 'none'}"></div><template v-for="(char, index) in decomposed">
                 <span class="new-line letter" :class="char[0]" v-if="char[1]==='\n'" :data-index="index"><br/></span>
-                <span v-else :class="char[0]" :data-index="index" class="letter">{{char[1]}}</span>
+                <span v-else :class="char[0]" :data-index="index" class="letter">{{char[1]}}</span><!--
+             --><span v-if="char[1]==='\n' && index === decomposed.length - 1" :data-index="index" class="letter">&nbsp;</span>
             </template>
         </div>
 
         <button v-on:click="focusTracker">Focus</button>
+        <button v-on:click="plainText">Plain</button>
     </div>
     <script src="tracker.js"></script>
 </body>

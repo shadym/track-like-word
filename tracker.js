@@ -266,6 +266,11 @@ const app = new Vue({
         },
         focusTracker: function() {
             document.getElementById('tracker').focus();
+        },
+        plainText: function() {
+            this.decomposed = this.decomposed
+                .filter(c => c[0] != codeName.deleted)
+                .map(c => [codeName.normal, c[1]]);
         }
     },
     created() {
